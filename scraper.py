@@ -98,17 +98,21 @@ soup = BeautifulSoup(html, 'lxml')
 
 #### SCRAPE DATA
 
-block = soup.find('div', attrs = {'class':'content-block '})
-links = block.find_all('a', href =True)
-for link in links:
-    csvfile = link.text
-    if 'CSV' in csvfile:
-        url = 'https://www.sheffield.gov.uk' + link['href']
-        csvYr = csvfile.strip().split(' ')[1]
-        csvMth = csvfile.strip().split(' ')[0][:3]
+blocks = soup.find_all('a')
+for block in blocks:
+    csvMth = csvYr = ''
+    if 'spend' in block.text and 'Spend-Data' in block['href']:
+        if '2011 to' in block.text:
+            csvMth = 'Q0'
+            csvYr = '2015'
+        if 'to present' in block.text:
+            csvMth = 'Q0'
+            csvYr = '2016'
+        original_link_ending = block['href'].split('/')[-1]
+        link = 'https://data.sheffield.gov.uk/api/views/{}/rows.csv?accessType=DOWNLOAD'.format(original_link_ending)
         csvMth = convert_mth_strings(csvMth.upper())
         todays_date = str(datetime.now())
-        data.append([csvYr, csvMth, url])
+        data.append([csvYr, csvMth, link])
 
 #### STORE DATA 1.0
 
