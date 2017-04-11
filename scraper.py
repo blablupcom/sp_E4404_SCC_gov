@@ -86,10 +86,10 @@ def convert_mth_strings ( mth_string ):
 #### VARIABLES 1.0
 
 entity_id = "E4404_SCC_gov"
-url = "https://www.sheffield.gov.uk/your-city-council/finance/supplier-payments.html"
+urls = "https://data.sheffield.gov.uk/browse?category=Economy&amp;tags=spend&amp;page={}"
 errors = 0
 data = []
-
+url = 'http://example.com'
 
 #### READ HTML 1.0
 
@@ -97,22 +97,36 @@ html = urllib2.urlopen(url)
 soup = BeautifulSoup(html, 'lxml')
 
 #### SCRAPE DATA
-
-blocks = soup.find_all('a')
-for block in blocks:
-    csvMth = csvYr = ''
-    if 'spend' in block.text and 'Spend-Data' in block['href']:
-        if '2011 to' in block.text:
-            csvMth = 'Q0'
-            csvYr = '2015'
-        if 'to present' in block.text:
-            csvMth = 'Q0'
-            csvYr = '2016'
-        original_link_ending = block['href'].split('/')[-1]
-        link = 'https://data.sheffield.gov.uk/api/views/{}/rows.csv?accessType=DOWNLOAD'.format(original_link_ending)
-        csvMth = convert_mth_strings(csvMth.upper())
-        todays_date = str(datetime.now())
-        data.append([csvYr, csvMth, link])
+for i in range(1, 4):
+    html = urllib2.urlopen(urls.format(i))
+    soup = BeautifulSoup(html, 'lxml')
+    links = soup.find_all('a', 'browse2-result-name-link')
+    for link in links:
+        csvfile = link.text
+        if '20' in csvfile:
+            id_url = link['href']
+            id_num = id_url.split('/')[-1]
+            url = 'https://data.sheffield.gov.uk/api/views/{}/rows.csv?accessType=DOWNLOAD'.format(id_num)
+            csvMth = csvfile[:3]
+            csvYr = csvfile.split()[1]
+            if 'January 2011 - June 2015' in csvfile:
+                csvMth = 'Y1'
+                csvYr = '2011'
+            if 'July 2015 To August 2015' in csvfile:
+                csvMth = 'Q0'
+                csvYr = '2015'
+            if 'Sheffield City Council April 2014' in csvfile:
+                csvMth = 'Apr'
+                csvYr = '2014'
+            if 'November 2015' in csvfile:
+                csvMth = 'Nov'
+                csvYr = '2015'
+            if 'September 2015' in csvfile:
+                csvMth = 'Sep'
+                csvYr = '2015'
+            csvMth = convert_mth_strings(csvMth.upper())
+            todays_date = str(datetime.now())
+            data.append([csvYr, csvMth, url])
 
 #### STORE DATA 1.0
 
